@@ -9,7 +9,6 @@ import com.example.lab_week_10.viewmodels.TotalViewModel
 
 class MainActivity : AppCompatActivity() {
 
-    // Inisialisasi ViewModel menggunakan lazy delegate
     private val viewModel by lazy {
         ViewModelProvider(this)[TotalViewModel::class.java]
     }
@@ -30,15 +29,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Setup observer untuk ViewModel dan click listener untuk button
+     * Observe LiveData dan setup click listener
+     * Setiap kali nilai LiveData berubah, updateText akan dipanggil
      */
     private fun prepareViewModel() {
-        // Update UI dengan nilai awal dari ViewModel
-        updateText(viewModel.total)
+        // Observe LiveData object
+        viewModel.total.observe(this) {
+            // Ketika nilai LiveData berubah, updateText dipanggil dengan nilai baru
+            updateText(it)
+        }
 
-        // Set click listener untuk increment button
         findViewById<Button>(R.id.button_increment).setOnClickListener {
-            updateText(viewModel.incrementTotal())
+            viewModel.incrementTotal()
         }
     }
 }
