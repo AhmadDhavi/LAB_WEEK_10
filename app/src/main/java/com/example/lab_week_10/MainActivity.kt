@@ -3,16 +3,19 @@ package com.example.lab_week_10
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.room.Room
 import com.example.lab_week_10.database.Total
+import com.example.lab_week_10.database.TotalObject
 import com.example.lab_week_10.database.TotalDatabase
 import com.example.lab_week_10.viewmodels.TotalViewModel
+import java.util.Date
 
 /**
- * Main Activity untuk aplikasi counter dengan persistence menggunakan Room Database.
- * Mengelola lifecycle, data loading, dan saving dengan Room.
+ * Main Activity untuk aplikasi counter dengan Room Database dan timestamp tracking
+ * Menampilkan kapan terakhir kali nilai counter di-update
  */
 class MainActivity : AppCompatActivity() {
 
@@ -39,6 +42,15 @@ class MainActivity : AppCompatActivity() {
 
         // Setup observer ViewModel dan button click listener
         prepareViewModel()
+
+        // Tampilkan timestamp di onStart
+        showLastUpdateTimestamp()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Tampilkan kapan terakhir kali counter di-update
+        showLastUpdateTimestamp()
     }
 
     /**
@@ -49,18 +61,20 @@ class MainActivity : AppCompatActivity() {
         val totalList = db.totalDao().getTotal(ID)
 
         if (totalList.isEmpty()) {
-            // Database kosong, insert nilai awal 0
+            // Database kosong, insert nilai awal 0 dengan timestamp saat ini
             db.totalDao().insert(
                 Total(
                     id = ID,
-                    total = 0
+                    total = TotalObject(
+                        value = 0,
+                        date = Date().toString()
+                    )
                 )
             )
-            // Set ViewModel ke 0
             viewModel.setTotal(0)
         } else {
             // Database ada data, ambil nilai total
-            val savedTotal = totalList.first().total
+            val savedTotal = totalList.first().total.value
             viewModel.setTotal(savedTotal)
         }
     }
@@ -97,20 +111,42 @@ class MainActivity : AppCompatActivity() {
             TotalDatabase::class.java,
             "total-database"
         )
-            .allowMainThreadQueries() // Izinkan query di main thread (untuk kesederhanaan modul)
+            .allowMainThreadQueries()
+            .fallbackToDestructiveMigration()  // Destructive migration untuk development
             .build()
     }
 
+
     /**
-     * Simpan nilai counter ke database saat activity di-pause
+     * Tampilkan timestamp terakhir kali counter di-update
+     */
+    private fun showLastUpdateTimestamp() {
+        val totalList = db.totalDao().getTotal(ID)
+
+        if (totalList.isNotEmpty()) {
+            val lastUpdateDate = totalList.first().total.date
+            Toast.makeText(
+                this,
+                "Last update: $lastUpdateDate",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    /**
+     * Simpan nilai counter ke database dan update timestamp saat activity di-pause
      */
     override fun onPause() {
         super.onPause()
         val currentTotal = viewModel.total.value ?: 0
+
         db.totalDao().update(
             Total(
                 id = ID,
-                total = currentTotal
+                total = TotalObject(
+                    value = currentTotal,
+                    date = Date().toString() // Update timestamp dengan waktu sekarang
+                )
             )
         )
     }
