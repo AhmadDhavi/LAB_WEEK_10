@@ -11,13 +11,9 @@ import com.example.lab_week_10.viewmodels.TotalViewModel
 
 /**
  * Fragment untuk menampilkan total counter
- * Menggunakan ViewModel yang sama dengan MainActivity
+ * Menggunakan shared ViewModel dengan Activity
  */
 class FirstFragment : Fragment() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -29,11 +25,11 @@ class FirstFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        prepareViewModel()
+        setupViewModel()
     }
 
     /**
-     * Update text pada TextView sesuai nilai total
+     * Update TextView dengan nilai total
      */
     private fun updateText(total: Int) {
         view?.findViewById<TextView>(R.id.text_total)?.text =
@@ -43,14 +39,11 @@ class FirstFragment : Fragment() {
     /**
      * Setup ViewModel dengan activity scope untuk shared data
      */
-    private fun prepareViewModel() {
+    private fun setupViewModel() {
         val viewModel = ViewModelProvider(requireActivity())[TotalViewModel::class.java]
-        viewModel.total.observe(viewLifecycleOwner) {
-            updateText(it)
-        }
-    }
 
-    companion object {
-        fun newInstance(param1: String, param2: String) = FirstFragment()
+        viewModel.total.observe(viewLifecycleOwner) { newTotal ->
+            updateText(newTotal)
+        }
     }
 }
